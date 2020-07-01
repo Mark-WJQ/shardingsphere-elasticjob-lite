@@ -17,7 +17,6 @@
 
 package org.apache.shardingsphere.elasticjob.lite.console.controller;
 
-import com.google.common.base.Optional;
 import java.util.Collection;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -70,10 +69,7 @@ public final class RegistryCenterController {
      */
     @GetMapping(produces = MediaType.APPLICATION_JSON)
     public Collection<RegistryCenterConfiguration> load(final HttpServletRequest request) {
-        Optional<RegistryCenterConfiguration> regCenterConfig = regCenterService.loadActivated();
-        if (regCenterConfig.isPresent()) {
-            setRegistryCenterNameToSession(regCenterConfig.get(), request.getSession());
-        }
+        regCenterService.loadActivated().ifPresent(regCenterConfig -> setRegistryCenterNameToSession(regCenterConfig, request.getSession()));
         return regCenterService.loadAll().getRegistryCenterConfiguration();
     }
 

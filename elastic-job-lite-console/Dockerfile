@@ -15,16 +15,9 @@
 # limitations under the License.
 #
 
-# Default web server port
-server.port=8899
-
-auth.root_username=root
-auth.root_password=root
-auth.guest_username=guest
-auth.guest_password=guest
-
-spring.datasource.default.driver-class-name=org.h2.Driver
-spring.datasource.default.url=jdbc:h2:mem:
-spring.datasource.default.username=sa
-spring.datasource.default.password=
-spring.jpa.database-platform=org.hibernate.dialect.HSQLDialect
+FROM adoptopenjdk:8-jre-hotspot
+CMD bin/start.sh -p $CONSOLE_PORT
+ENV CONSOLE_PORT=8899
+ADD target/elastic-job-lite-console-*.tar.gz /
+RUN mv $(ls -d /elastic-job-lite-console-*) /elastic-job-lite-console
+WORKDIR /elastic-job-lite-console

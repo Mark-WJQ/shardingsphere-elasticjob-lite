@@ -15,21 +15,25 @@
  * limitations under the License.
  */
 
-package org.apache.shardingsphere.elasticjob.lite.lifecycle.restful.fixture;
+package org.apache.shardingsphere.elasticjob.lite.console.dao.statistics;
 
-public interface Caller {
-    
+import java.util.Date;
+import java.util.List;
+import org.apache.shardingsphere.elasticjob.lite.console.domain.JobRunningStatistics;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface JobRunningStatisticsRepository extends JpaRepository<JobRunningStatistics, Long> {
+
     /**
-     * Execute call.
+     * Find job running statistics.
      *
-     * @param value value
+     * @param fromTime from date to statistics
+     * @return job running statistics
      */
-    void call(String value);
-    
-    /**
-     * Execute call.
-     *
-     * @param value value
-     */
-    void call(int value);
+    @Query("FROM JobRunningStatistics WHERE statisticsTime >= :fromTime")
+    List<JobRunningStatistics> findJobRunningStatistics(@Param("fromTime") Date fromTime);
 }
