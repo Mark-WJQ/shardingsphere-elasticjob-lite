@@ -17,7 +17,6 @@
 
 package org.apache.shardingsphere.elasticjob.lite.lifecycle.internal.settings;
 
-import org.apache.shardingsphere.elasticjob.lite.api.JobType;
 import org.apache.shardingsphere.elasticjob.lite.lifecycle.api.JobSettingsAPI;
 import org.apache.shardingsphere.elasticjob.lite.lifecycle.domain.JobSettings;
 import org.apache.shardingsphere.elasticjob.lite.lifecycle.fixture.LifecycleYamlConstants;
@@ -53,7 +52,8 @@ public final class JobSettingsAPIImplTest {
     public void assertGetDataflowJobSettings() {
         when(regCenter.get("/test_job/config")).thenReturn(LifecycleYamlConstants.getDataflowJobYaml());
         JobSettings actual = jobSettingsAPI.getJobSettings("test_job");
-        assertJobSettings(actual, "DATAFLOW");
+        assertJobSettings(actual);
+        assertTrue(actual.isStreamingProcess());
         verify(regCenter).get("/test_job/config");
     }
     
@@ -61,38 +61,30 @@ public final class JobSettingsAPIImplTest {
     public void assertGetScriptJobSettings() {
         when(regCenter.get("/test_job/config")).thenReturn(LifecycleYamlConstants.getScriptJobYaml());
         JobSettings actual = jobSettingsAPI.getJobSettings("test_job");
-        assertJobSettings(actual, "SCRIPT");
+        assertJobSettings(actual);
+        assertThat(actual.getScriptCommandLine(), is("echo"));
         verify(regCenter).get("/test_job/config");
     }
     
-    private void assertJobSettings(final JobSettings jobSettings, final String jobType) {
+    private void assertJobSettings(final JobSettings jobSettings) {
         assertThat(jobSettings.getJobName(), is("test_job"));
-        assertThat(jobSettings.getJobType(), is(jobType));
         assertThat(jobSettings.getShardingTotalCount(), is(3));
         assertThat(jobSettings.getCron(), is("0/1 * * * * ?"));
         assertThat(jobSettings.getShardingItemParameters(), is(""));
         assertThat(jobSettings.getJobParameter(), is("param"));
         assertThat(jobSettings.isMonitorExecution(), is(true));
         assertThat(jobSettings.getMaxTimeDiffSeconds(), is(-1));
-        assertThat(jobSettings.getMonitorPort(), is(8888));
         assertFalse(jobSettings.isFailover());
         assertTrue(jobSettings.isMisfire());
         assertNull(jobSettings.getJobShardingStrategyType());
         assertThat(jobSettings.getReconcileIntervalMinutes(), is(10));
         assertThat(jobSettings.getDescription(), is(""));
-        if ("DATAFLOW".equals(jobType)) {
-            assertTrue(jobSettings.isStreamingProcess());
-        }
-        if ("SCRIPT".equals(jobType)) {
-            assertThat(jobSettings.getScriptCommandLine(), is("test.sh"));
-        }
     }
     
     @Test
     public void assertUpdateJobSettings() {
         JobSettings jobSettings = new JobSettings();
         jobSettings.setJobName("test_job");
-        jobSettings.setJobType(JobType.DATAFLOW.toString());
         jobSettings.setCron("0/1 * * * * ?");
         jobSettings.setShardingTotalCount(3);
         jobSettings.setJobParameter("param");
@@ -101,7 +93,6 @@ public final class JobSettingsAPIImplTest {
         jobSettings.setMisfire(true);
         jobSettings.setMaxTimeDiffSeconds(-1);
         jobSettings.setReconcileIntervalMinutes(10);
-        jobSettings.setMonitorPort(8888);
         jobSettings.setDescription("");
         jobSettings.setStreamingProcess(true);
         jobSettingsAPI.updateJobSettings(jobSettings);

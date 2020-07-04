@@ -19,8 +19,7 @@ package org.apache.shardingsphere.elasticjob.lite.internal.config.yaml;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.shardingsphere.elasticjob.lite.api.JobType;
-import org.apache.shardingsphere.elasticjob.lite.config.JobConfiguration;
+import org.apache.shardingsphere.elasticjob.lite.api.job.config.JobConfiguration;
 
 import java.util.Properties;
 
@@ -32,8 +31,6 @@ import java.util.Properties;
 public final class YamlJobConfiguration {
     
     private String jobName;
-    
-    private JobType jobType;
     
     private String cron;
     
@@ -52,8 +49,6 @@ public final class YamlJobConfiguration {
     private int maxTimeDiffSeconds;
     
     private int reconcileIntervalMinutes;
-    
-    private int monitorPort;
     
     private String jobShardingStrategyType;
     
@@ -75,10 +70,10 @@ public final class YamlJobConfiguration {
      * @return job configuration
      */
     public JobConfiguration toJobConfiguration() {
-        JobConfiguration result = JobConfiguration.newBuilder(jobName, jobType, cron, shardingTotalCount)
-                .shardingItemParameters(shardingItemParameters).jobParameter(jobParameter)
+        JobConfiguration result = JobConfiguration.newBuilder(jobName, shardingTotalCount)
+                .cron(cron).shardingItemParameters(shardingItemParameters).jobParameter(jobParameter)
                 .monitorExecution(monitorExecution).failover(failover).misfire(misfire)
-                .maxTimeDiffSeconds(maxTimeDiffSeconds).reconcileIntervalMinutes(reconcileIntervalMinutes).monitorPort(monitorPort)
+                .maxTimeDiffSeconds(maxTimeDiffSeconds).reconcileIntervalMinutes(reconcileIntervalMinutes)
                 .jobShardingStrategyType(jobShardingStrategyType).jobExecutorServiceHandlerType(jobExecutorServiceHandlerType).jobErrorHandlerType(jobErrorHandlerType)
                 .description(description).disabled(disabled).overwrite(overwrite).build();
         for (Object each : props.keySet()) {
@@ -96,7 +91,6 @@ public final class YamlJobConfiguration {
     public static YamlJobConfiguration fromJobConfiguration(final JobConfiguration jobConfiguration) {
         YamlJobConfiguration result = new YamlJobConfiguration();
         result.setJobName(jobConfiguration.getJobName());
-        result.setJobType(jobConfiguration.getJobType());
         result.setCron(jobConfiguration.getCron());
         result.setShardingTotalCount(jobConfiguration.getShardingTotalCount());
         result.setShardingItemParameters(jobConfiguration.getShardingItemParameters());
@@ -106,7 +100,6 @@ public final class YamlJobConfiguration {
         result.setMisfire(jobConfiguration.isMisfire());
         result.setMaxTimeDiffSeconds(jobConfiguration.getMaxTimeDiffSeconds());
         result.setReconcileIntervalMinutes(jobConfiguration.getReconcileIntervalMinutes());
-        result.setMonitorPort(jobConfiguration.getMonitorPort());
         result.setJobShardingStrategyType(jobConfiguration.getJobShardingStrategyType());
         result.setJobExecutorServiceHandlerType(jobConfiguration.getJobExecutorServiceHandlerType());
         result.setJobErrorHandlerType(jobConfiguration.getJobErrorHandlerType());

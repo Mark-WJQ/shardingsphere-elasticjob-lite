@@ -7,7 +7,7 @@
  * the License.  You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,8 +17,7 @@
 
 package org.apache.shardingsphere.elasticjob.lite.executor.type.impl;
 
-import org.apache.shardingsphere.elasticjob.lite.api.JobType;
-import org.apache.shardingsphere.elasticjob.lite.config.JobConfiguration;
+import org.apache.shardingsphere.elasticjob.lite.api.job.config.JobConfiguration;
 import org.apache.shardingsphere.elasticjob.lite.exception.JobExecutionEnvironmentException;
 import org.apache.shardingsphere.elasticjob.lite.exception.JobSystemException;
 import org.apache.shardingsphere.elasticjob.lite.executor.ElasticJobExecutor;
@@ -63,19 +62,19 @@ public final class SimpleJobExecutorTest {
     
     @Before
     public void setUp() {
-        elasticJobExecutor = new ElasticJobExecutor(regCenter, new TestSimpleJob(jobCaller), createJobConfiguration(null, "THROW"), Collections.emptyList());
+        elasticJobExecutor = new ElasticJobExecutor(regCenter, new TestSimpleJob(jobCaller), createJobConfiguration(null, "THROW"), Collections.emptyList(), null);
         ReflectionUtils.setFieldValue(elasticJobExecutor, "jobFacade", jobFacade);
     }
     
     private JobConfiguration createJobConfiguration(final String jobExecutorServiceHandlerType, final String jobErrorHandlerType) {
-        return JobConfiguration.newBuilder(ShardingContextsBuilder.JOB_NAME, JobType.SIMPLE, "0/1 * * * * ?", 3)
-                .shardingItemParameters("0=A,1=B,2=C").jobParameter("param").failover(true).misfire(false)
+        return JobConfiguration.newBuilder(ShardingContextsBuilder.JOB_NAME, 3)
+                .cron("0/1 * * * * ?").shardingItemParameters("0=A,1=B,2=C").jobParameter("param").failover(true).misfire(false)
                 .jobExecutorServiceHandlerType(jobExecutorServiceHandlerType).jobErrorHandlerType(jobErrorHandlerType).description("desc").build();
     }
     
     @Test
     public void assertNewExecutorWithDefaultHandlers() {
-        elasticJobExecutor = new ElasticJobExecutor(regCenter, new TestSimpleJob(jobCaller), createJobConfiguration(null, null), Collections.emptyList());
+        elasticJobExecutor = new ElasticJobExecutor(regCenter, new TestSimpleJob(jobCaller), createJobConfiguration(null, null), Collections.emptyList(), null);
         assertThat(ReflectionUtils.getFieldValue(elasticJobExecutor, "executorService"), instanceOf(new CPUUsageJobExecutorServiceHandler().createExecutorService("test_job").getClass()));
         assertThat(ReflectionUtils.getFieldValue(elasticJobExecutor, "jobErrorHandler"), instanceOf(LogJobErrorHandler.class));
     }

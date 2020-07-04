@@ -17,8 +17,7 @@
 
 package org.apache.shardingsphere.elasticjob.lite.internal.setup;
 
-import org.apache.shardingsphere.elasticjob.lite.api.JobType;
-import org.apache.shardingsphere.elasticjob.lite.config.JobConfiguration;
+import org.apache.shardingsphere.elasticjob.lite.api.job.config.JobConfiguration;
 import org.apache.shardingsphere.elasticjob.lite.executor.type.impl.DataflowJobExecutor;
 import org.apache.shardingsphere.elasticjob.lite.fixture.TestDataflowJob;
 import org.apache.shardingsphere.elasticjob.lite.handler.sharding.JobInstance;
@@ -26,13 +25,10 @@ import org.apache.shardingsphere.elasticjob.lite.internal.config.ConfigurationSe
 import org.apache.shardingsphere.elasticjob.lite.internal.election.LeaderService;
 import org.apache.shardingsphere.elasticjob.lite.internal.instance.InstanceService;
 import org.apache.shardingsphere.elasticjob.lite.internal.listener.ListenerManager;
-import org.apache.shardingsphere.elasticjob.lite.internal.monitor.MonitorService;
 import org.apache.shardingsphere.elasticjob.lite.internal.reconcile.ReconcileService;
 import org.apache.shardingsphere.elasticjob.lite.internal.schedule.JobRegistry;
-import org.apache.shardingsphere.elasticjob.lite.internal.schedule.JobScheduleController;
 import org.apache.shardingsphere.elasticjob.lite.internal.server.ServerService;
 import org.apache.shardingsphere.elasticjob.lite.internal.sharding.ShardingService;
-import org.apache.shardingsphere.elasticjob.lite.reg.base.CoordinatorRegistryCenter;
 import org.apache.shardingsphere.elasticjob.lite.util.ReflectionUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -51,12 +47,6 @@ import static org.mockito.Mockito.when;
 public final class SetUpFacadeTest {
     
     @Mock
-    private CoordinatorRegistryCenter regCenter;
-    
-    @Mock
-    private JobScheduleController jobScheduleController;
-    
-    @Mock
     private ConfigurationService configService;
     
     @Mock
@@ -70,9 +60,6 @@ public final class SetUpFacadeTest {
     
     @Mock
     private ShardingService shardingService;
-    
-    @Mock
-    private MonitorService monitorService;
     
     @Mock
     private ReconcileService reconcileService;
@@ -91,15 +78,14 @@ public final class SetUpFacadeTest {
         ReflectionUtils.setFieldValue(setUpFacade, "serverService", serverService);
         ReflectionUtils.setFieldValue(setUpFacade, "instanceService", instanceService);
         ReflectionUtils.setFieldValue(setUpFacade, "shardingService", shardingService);
-        ReflectionUtils.setFieldValue(setUpFacade, "monitorService", monitorService);
         ReflectionUtils.setFieldValue(setUpFacade, "reconcileService", reconcileService);
         ReflectionUtils.setFieldValue(setUpFacade, "listenerManager", listenerManager);
     }
     
     @Test
     public void assertSetUpJobConfiguration() {
-        JobConfiguration jobConfig = JobConfiguration.newBuilder(
-                "test_job", JobType.DATAFLOW, "0/1 * * * * ?", 3).setProperty(DataflowJobExecutor.STREAM_PROCESS_KEY, Boolean.TRUE.toString()).build();
+        JobConfiguration jobConfig = JobConfiguration.newBuilder("test_job", 3)
+                .cron("0/1 * * * * ?").setProperty(DataflowJobExecutor.STREAM_PROCESS_KEY, Boolean.TRUE.toString()).build();
         when(configService.setUpJobConfiguration(TestDataflowJob.class.getName(), jobConfig)).thenReturn(jobConfig);
         assertThat(setUpFacade.setUpJobConfiguration(TestDataflowJob.class.getName(), jobConfig), is(jobConfig));
         verify(configService).setUpJobConfiguration(TestDataflowJob.class.getName(), jobConfig);
@@ -112,6 +98,5 @@ public final class SetUpFacadeTest {
         verify(leaderService).electLeader();
         verify(serverService).persistOnline(true);
         verify(shardingService).setReshardingFlag();
-        verify(monitorService).listen();
     }
 }

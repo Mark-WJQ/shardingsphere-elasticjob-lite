@@ -19,8 +19,7 @@ package org.apache.shardingsphere.elasticjob.lite.fixture.util;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.apache.shardingsphere.elasticjob.lite.api.JobType;
-import org.apache.shardingsphere.elasticjob.lite.config.JobConfiguration;
+import org.apache.shardingsphere.elasticjob.lite.api.job.config.JobConfiguration;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class JobConfigurationUtil {
@@ -31,7 +30,7 @@ public final class JobConfigurationUtil {
      * @return job configuration
      */
     public static JobConfiguration createSimpleJobConfiguration() {
-        return JobConfiguration.newBuilder("test_job", JobType.SIMPLE, "0/1 * * * * ?", 3).build();
+        return JobConfiguration.newBuilder("test_job", 3).cron("0/1 * * * * ?").build();
     }
     
     /**
@@ -41,6 +40,6 @@ public final class JobConfigurationUtil {
      * @return job configuration
      */
     public static JobConfiguration createSimpleJobConfiguration(final boolean overwrite) {
-        return JobConfiguration.newBuilder("test_job", JobType.SIMPLE, "0/1 * * * * ?", 3).overwrite(overwrite).build();
+        return JobConfiguration.newBuilder("test_job", 3).cron("0/1 * * * * ?").overwrite(overwrite).build();
     }
 }

@@ -17,8 +17,7 @@
 
 package org.apache.shardingsphere.elasticjob.lite.internal.config.yaml;
 
-import org.apache.shardingsphere.elasticjob.lite.api.JobType;
-import org.apache.shardingsphere.elasticjob.lite.config.JobConfiguration;
+import org.apache.shardingsphere.elasticjob.lite.api.job.config.JobConfiguration;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -31,7 +30,6 @@ public final class YamlJobConfigurationTest {
     public void assertToJobConfiguration() {
         YamlJobConfiguration yamlJobConfiguration = new YamlJobConfiguration();
         yamlJobConfiguration.setJobName("test_job");
-        yamlJobConfiguration.setJobType(JobType.SIMPLE);
         yamlJobConfiguration.setCron("0/1 * * * * ?");
         yamlJobConfiguration.setShardingTotalCount(3);
         yamlJobConfiguration.setShardingItemParameters("0=A,1=B,2=C");
@@ -48,7 +46,6 @@ public final class YamlJobConfigurationTest {
         yamlJobConfiguration.setOverwrite(true);
         JobConfiguration actual = yamlJobConfiguration.toJobConfiguration();
         assertThat(actual.getJobName(), is("test_job"));
-        assertThat(actual.getJobType(), is(JobType.SIMPLE));
         assertThat(actual.getCron(), is("0/1 * * * * ?"));
         assertThat(actual.getShardingTotalCount(), is(3));
         assertThat(actual.getShardingItemParameters(), is("0=A,1=B,2=C"));
@@ -67,7 +64,8 @@ public final class YamlJobConfigurationTest {
     
     @Test
     public void assertFromJobConfiguration() {
-        JobConfiguration jobConfiguration = JobConfiguration.newBuilder("test_job", JobType.SIMPLE, "0/1 * * * * ?", 3)
+        JobConfiguration jobConfiguration = JobConfiguration.newBuilder("test_job", 3)
+                .cron("0/1 * * * * ?")
                 .shardingItemParameters("0=A,1=B,2=C").jobParameter("param")
                 .monitorExecution(true).failover(true).misfire(true)
                 .jobShardingStrategyType("AVG_ALLOCATION").jobExecutorServiceHandlerType("CPU").jobErrorHandlerType("IGNORE")
@@ -75,7 +73,6 @@ public final class YamlJobConfigurationTest {
                 .disabled(true).overwrite(true).build();
         YamlJobConfiguration actual = YamlJobConfiguration.fromJobConfiguration(jobConfiguration);
         assertThat(actual.getJobName(), is("test_job"));
-        assertThat(actual.getJobType(), is(JobType.SIMPLE));
         assertThat(actual.getCron(), is("0/1 * * * * ?"));
         assertThat(actual.getShardingTotalCount(), is(3));
         assertThat(actual.getShardingItemParameters(), is("0=A,1=B,2=C"));

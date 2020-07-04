@@ -19,10 +19,9 @@ package org.apache.shardingsphere.elasticjob.lite.lifecycle.domain;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.shardingsphere.elasticjob.lite.api.JobType;
 import org.apache.shardingsphere.elasticjob.lite.executor.type.impl.DataflowJobExecutor;
-import org.apache.shardingsphere.elasticjob.lite.executor.type.impl.ScriptJobExecutor;
 import org.apache.shardingsphere.elasticjob.lite.internal.config.yaml.YamlJobConfiguration;
+import org.apache.shardingsphere.elasticjob.lite.job.impl.ScriptJob;
 
 import java.io.Serializable;
 
@@ -36,8 +35,6 @@ public final class JobSettings implements Serializable {
     private static final long serialVersionUID = -6532210090618686688L;
     
     private String jobName;
-    
-    private String jobType;
     
     private String cron;
     
@@ -56,8 +53,6 @@ public final class JobSettings implements Serializable {
     private int maxTimeDiffSeconds;
     
     private int reconcileIntervalMinutes;
-    
-    private int monitorPort = -1;
     
     private String jobShardingStrategyType;
     
@@ -79,7 +74,6 @@ public final class JobSettings implements Serializable {
     public YamlJobConfiguration toYamlJobConfiguration() {
         YamlJobConfiguration result = new YamlJobConfiguration();
         result.setJobName(jobName);
-        result.setJobType(JobType.valueOf(jobType));
         result.setCron(cron);
         result.setShardingTotalCount(shardingTotalCount);
         result.setShardingItemParameters(shardingItemParameters);
@@ -89,14 +83,13 @@ public final class JobSettings implements Serializable {
         result.setMisfire(misfire);
         result.setMaxTimeDiffSeconds(maxTimeDiffSeconds);
         result.setReconcileIntervalMinutes(reconcileIntervalMinutes);
-        result.setMonitorPort(monitorPort);
         result.setJobShardingStrategyType(jobShardingStrategyType);
         result.setJobExecutorServiceHandlerType(jobExecutorServiceHandlerType);
         result.setJobErrorHandlerType(jobErrorHandlerType);
         result.setDescription(description);
         result.getProps().setProperty(DataflowJobExecutor.STREAM_PROCESS_KEY, Boolean.valueOf(streamingProcess).toString());
         if (null != scriptCommandLine) {
-            result.getProps().setProperty(ScriptJobExecutor.SCRIPT_KEY, scriptCommandLine);
+            result.getProps().setProperty(ScriptJob.SCRIPT_KEY, scriptCommandLine);
         }
         return result;
     }

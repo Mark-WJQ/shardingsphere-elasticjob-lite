@@ -19,7 +19,6 @@ package org.apache.shardingsphere.elasticjob.lite.internal.schedule;
 
 import org.apache.shardingsphere.elasticjob.lite.handler.sharding.JobInstance;
 import org.apache.shardingsphere.elasticjob.lite.internal.election.LeaderService;
-import org.apache.shardingsphere.elasticjob.lite.internal.monitor.MonitorService;
 import org.apache.shardingsphere.elasticjob.lite.internal.reconcile.ReconcileService;
 import org.apache.shardingsphere.elasticjob.lite.internal.sharding.ShardingService;
 import org.apache.shardingsphere.elasticjob.lite.reg.base.CoordinatorRegistryCenter;
@@ -50,9 +49,6 @@ public final class SchedulerFacadeTest {
     private ShardingService shardingService;
     
     @Mock
-    private MonitorService monitorService;
-    
-    @Mock
     private ReconcileService reconcileService;
     
     private SchedulerFacade schedulerFacade;
@@ -63,16 +59,15 @@ public final class SchedulerFacadeTest {
         schedulerFacade = new SchedulerFacade(null, "test_job");
         ReflectionUtils.setFieldValue(schedulerFacade, "leaderService", leaderService);
         ReflectionUtils.setFieldValue(schedulerFacade, "shardingService", shardingService);
-        ReflectionUtils.setFieldValue(schedulerFacade, "monitorService", monitorService);
         ReflectionUtils.setFieldValue(schedulerFacade, "reconcileService", reconcileService);
     }
     
     @Test
     public void assertShutdownInstanceIfNotLeaderAndReconcileServiceIsNotRunning() {
-        JobRegistry.getInstance().registerJob("test_job", jobScheduleController, regCenter);
+        JobRegistry.getInstance().registerRegistryCenter("test_job", regCenter);
+        JobRegistry.getInstance().registerJob("test_job", jobScheduleController);
         schedulerFacade.shutdownInstance();
         verify(leaderService, times(0)).removeLeader();
-        verify(monitorService).close();
         verify(reconcileService, times(0)).stopAsync();
         verify(jobScheduleController).shutdown();
     }
@@ -81,10 +76,10 @@ public final class SchedulerFacadeTest {
     public void assertShutdownInstanceIfLeaderAndReconcileServiceIsRunning() {
         when(leaderService.isLeader()).thenReturn(true);
         when(reconcileService.isRunning()).thenReturn(true);
-        JobRegistry.getInstance().registerJob("test_job", jobScheduleController, regCenter);
+        JobRegistry.getInstance().registerRegistryCenter("test_job", regCenter);
+        JobRegistry.getInstance().registerJob("test_job", jobScheduleController);
         schedulerFacade.shutdownInstance();
         verify(leaderService).removeLeader();
-        verify(monitorService).close();
         verify(reconcileService).stopAsync();
         verify(jobScheduleController).shutdown();
     }

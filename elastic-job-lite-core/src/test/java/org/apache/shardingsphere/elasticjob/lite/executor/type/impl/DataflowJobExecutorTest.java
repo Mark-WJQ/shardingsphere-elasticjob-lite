@@ -7,7 +7,7 @@
  * the License.  You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,8 +17,7 @@
 
 package org.apache.shardingsphere.elasticjob.lite.executor.type.impl;
 
-import org.apache.shardingsphere.elasticjob.lite.api.JobType;
-import org.apache.shardingsphere.elasticjob.lite.config.JobConfiguration;
+import org.apache.shardingsphere.elasticjob.lite.api.job.config.JobConfiguration;
 import org.apache.shardingsphere.elasticjob.lite.executor.ElasticJobExecutor;
 import org.apache.shardingsphere.elasticjob.lite.executor.JobFacade;
 import org.apache.shardingsphere.elasticjob.lite.executor.ShardingContexts;
@@ -103,7 +102,6 @@ public final class DataflowJobExecutorTest {
     public void assertExecuteWhenFetchDataIsNotEmptyForStreamingProcessAndSingleShardingItem() {
         setUp(true, ShardingContextsBuilder.getSingleShardingContexts());
         when(jobCaller.fetchData(0)).thenReturn(Collections.singletonList(1), Collections.emptyList());
-        when(jobFacade.isEligibleForJobRunning()).thenReturn(true);
         elasticJobExecutor.execute();
         verify(jobCaller, times(2)).fetchData(0);
         verify(jobCaller).processData(1);
@@ -115,7 +113,6 @@ public final class DataflowJobExecutorTest {
         setUp(true, ShardingContextsBuilder.getMultipleShardingContexts());
         when(jobCaller.fetchData(0)).thenReturn(Collections.singletonList(1), Collections.emptyList());
         when(jobCaller.fetchData(1)).thenReturn(Collections.singletonList(2), Collections.emptyList());
-        when(jobFacade.isEligibleForJobRunning()).thenReturn(true);
         elasticJobExecutor.execute();
         verify(jobCaller, times(2)).fetchData(0);
         verify(jobCaller, times(2)).fetchData(1);
@@ -129,7 +126,6 @@ public final class DataflowJobExecutorTest {
         setUp(true, ShardingContextsBuilder.getMultipleShardingContexts());
         when(jobCaller.fetchData(0)).thenReturn(Collections.singletonList(1), Collections.emptyList());
         when(jobCaller.fetchData(1)).thenReturn(Arrays.asList(2, 3), Collections.emptyList());
-        when(jobFacade.isEligibleForJobRunning()).thenReturn(true);
         doThrow(new IllegalStateException()).when(jobCaller).processData(2);
         elasticJobExecutor.execute();
         verify(jobCaller, times(2)).fetchData(0);
@@ -143,7 +139,6 @@ public final class DataflowJobExecutorTest {
     @Test
     public void assertExecuteWhenFetchDataIsNotEmptyAndIsEligibleForJobRunningForStreamingProcess() {
         setUp(true, ShardingContextsBuilder.getMultipleShardingContexts());
-        when(jobFacade.isEligibleForJobRunning()).thenReturn(true);
         when(jobCaller.fetchData(0)).thenReturn(Arrays.asList(1, 2), Collections.emptyList());
         when(jobCaller.fetchData(1)).thenReturn(Arrays.asList(3, 4), Collections.emptyList());
         doThrow(new IllegalStateException()).when(jobCaller).processData(4);
@@ -159,7 +154,7 @@ public final class DataflowJobExecutorTest {
     @Test
     public void assertExecuteWhenFetchDataIsNotEmptyAndIsNotEligibleForJobRunningForStreamingProcess() {
         setUp(true, ShardingContextsBuilder.getMultipleShardingContexts());
-        when(jobFacade.isEligibleForJobRunning()).thenReturn(false);
+        when(jobFacade.isNeedSharding()).thenReturn(true);
         when(jobCaller.fetchData(0)).thenReturn(Arrays.asList(1, 2));
         when(jobCaller.fetchData(1)).thenReturn(Arrays.asList(3, 4));
         doThrow(new IllegalStateException()).when(jobCaller).processData(4);
@@ -174,10 +169,10 @@ public final class DataflowJobExecutorTest {
     
     private void setUp(final boolean isStreamingProcess, final ShardingContexts shardingContexts) {
         this.shardingContexts = shardingContexts;
-        JobConfiguration jobConfig = JobConfiguration.newBuilder(ShardingContextsBuilder.JOB_NAME, JobType.DATAFLOW, "0/1 * * * * ?", 3)
-                .jobErrorHandlerType("IGNORE").setProperty(DataflowJobExecutor.STREAM_PROCESS_KEY, Boolean.toString(isStreamingProcess)).build();
+        JobConfiguration jobConfig = JobConfiguration.newBuilder(ShardingContextsBuilder.JOB_NAME, 3)
+                .cron("0/1 * * * * ?").jobErrorHandlerType("IGNORE").setProperty(DataflowJobExecutor.STREAM_PROCESS_KEY, Boolean.toString(isStreamingProcess)).build();
         when(jobFacade.getShardingContexts()).thenReturn(shardingContexts);
-        elasticJobExecutor = new ElasticJobExecutor(regCenter, new TestDataflowJob(jobCaller), jobConfig, Collections.emptyList());
+        elasticJobExecutor = new ElasticJobExecutor(regCenter, new TestDataflowJob(jobCaller), jobConfig, Collections.emptyList(), null);
         ReflectionUtils.setFieldValue(elasticJobExecutor, "jobFacade", jobFacade);
         ElasticJobVerify.prepareForIsNotMisfire(jobFacade, shardingContexts);
     }

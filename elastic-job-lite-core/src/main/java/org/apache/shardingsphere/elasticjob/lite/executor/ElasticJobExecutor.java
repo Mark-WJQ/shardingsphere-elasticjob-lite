@@ -18,18 +18,17 @@
 package org.apache.shardingsphere.elasticjob.lite.executor;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.shardingsphere.elasticjob.lite.api.ElasticJob;
-import org.apache.shardingsphere.elasticjob.lite.api.ShardingContext;
-import org.apache.shardingsphere.elasticjob.lite.api.dataflow.DataflowJob;
+import org.apache.shardingsphere.elasticjob.lite.api.job.ElasticJob;
+import org.apache.shardingsphere.elasticjob.lite.api.job.ShardingContext;
 import org.apache.shardingsphere.elasticjob.lite.api.listener.ElasticJobListener;
-import org.apache.shardingsphere.elasticjob.lite.api.simple.SimpleJob;
-import org.apache.shardingsphere.elasticjob.lite.config.JobConfiguration;
+import org.apache.shardingsphere.elasticjob.lite.api.job.type.DataflowJob;
+import org.apache.shardingsphere.elasticjob.lite.api.job.type.SimpleJob;
+import org.apache.shardingsphere.elasticjob.lite.api.job.config.JobConfiguration;
 import org.apache.shardingsphere.elasticjob.lite.exception.ExceptionUtils;
 import org.apache.shardingsphere.elasticjob.lite.exception.JobConfigurationException;
 import org.apache.shardingsphere.elasticjob.lite.exception.JobExecutionEnvironmentException;
 import org.apache.shardingsphere.elasticjob.lite.executor.type.JobItemExecutor;
 import org.apache.shardingsphere.elasticjob.lite.executor.type.impl.DataflowJobExecutor;
-import org.apache.shardingsphere.elasticjob.lite.executor.type.impl.ScriptJobExecutor;
 import org.apache.shardingsphere.elasticjob.lite.executor.type.impl.SimpleJobExecutor;
 import org.apache.shardingsphere.elasticjob.lite.handler.error.JobErrorHandler;
 import org.apache.shardingsphere.elasticjob.lite.handler.error.JobErrorHandlerFactory;
@@ -69,30 +68,18 @@ public final class ElasticJobExecutor {
     
     private final Map<Integer, String> itemErrorMessages;
     
-    public ElasticJobExecutor(final CoordinatorRegistryCenter regCenter, final ElasticJob elasticJob, final JobConfiguration jobConfig, final List<ElasticJobListener> elasticJobListeners) {
-        this(elasticJob, jobConfig, new LiteJobFacade(regCenter, jobConfig.getJobName(), elasticJobListeners));
-    }
-    
-    public ElasticJobExecutor(final CoordinatorRegistryCenter regCenter, 
+    public ElasticJobExecutor(final CoordinatorRegistryCenter regCenter,
                               final ElasticJob elasticJob, final JobConfiguration jobConfig, final List<ElasticJobListener> elasticJobListeners, final TracingConfiguration tracingConfig) {
-        this(elasticJob, jobConfig, new LiteJobFacade(regCenter, jobConfig.getJobName(), elasticJobListeners, tracingConfig));
-    }
-    
-    private ElasticJobExecutor(final ElasticJob elasticJob, final JobConfiguration jobConfig, final JobFacade jobFacade) {
         this.elasticJob = elasticJob;
         this.jobConfig = jobConfig;
-        this.jobFacade = jobFacade;
+        this.jobFacade = new LiteJobFacade(regCenter, jobConfig.getJobName(), elasticJobListeners, tracingConfig);
         jobItemExecutor = getJobItemExecutor(elasticJob);
         executorService = JobExecutorServiceHandlerFactory.getHandler(jobConfig.getJobExecutorServiceHandlerType()).createExecutorService(jobConfig.getJobName());
         jobErrorHandler = JobErrorHandlerFactory.getHandler(jobConfig.getJobErrorHandlerType());
         itemErrorMessages = new ConcurrentHashMap<>(jobConfig.getShardingTotalCount(), 1);
     }
     
-    @SuppressWarnings("unchecked")
     private static JobItemExecutor getJobItemExecutor(final ElasticJob elasticJob) {
-        if (null == elasticJob) {
-            return new ScriptJobExecutor();
-        }
         if (elasticJob instanceof SimpleJob) {
             return new SimpleJobExecutor();
         }

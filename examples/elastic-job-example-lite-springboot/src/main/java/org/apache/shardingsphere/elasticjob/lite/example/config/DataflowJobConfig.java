@@ -17,10 +17,9 @@
 
 package org.apache.shardingsphere.elasticjob.lite.example.config;
 
-import org.apache.shardingsphere.elasticjob.lite.api.JobScheduler;
-import org.apache.shardingsphere.elasticjob.lite.api.JobType;
-import org.apache.shardingsphere.elasticjob.lite.api.dataflow.DataflowJob;
-import org.apache.shardingsphere.elasticjob.lite.config.JobConfiguration;
+import org.apache.shardingsphere.elasticjob.lite.api.bootstrap.impl.ScheduleJobBootstrap;
+import org.apache.shardingsphere.elasticjob.lite.api.job.type.DataflowJob;
+import org.apache.shardingsphere.elasticjob.lite.api.job.config.JobConfiguration;
 import org.apache.shardingsphere.elasticjob.lite.example.job.dataflow.SpringDataflowJob;
 import org.apache.shardingsphere.elasticjob.lite.executor.type.impl.DataflowJobExecutor;
 import org.apache.shardingsphere.elasticjob.lite.reg.zookeeper.ZookeeperRegistryCenter;
@@ -45,14 +44,15 @@ public class DataflowJobConfig {
         return new SpringDataflowJob(); 
     }
     
-    @Bean(initMethod = "init")
-    public JobScheduler dataflowJobScheduler(final DataflowJob dataflowJob, @Value("${dataflowJob.cron}") final String cron, @Value("${dataflowJob.shardingTotalCount}") final int shardingTotalCount,
-                                             @Value("${dataflowJob.shardingItemParameters}") final String shardingItemParameters) {
-        return new JobScheduler(regCenter, dataflowJob, getJobConfiguration(dataflowJob.getClass(), cron, shardingTotalCount, shardingItemParameters), tracingConfig);
+    @Bean(initMethod = "schedule")
+    public ScheduleJobBootstrap dataflowJobScheduler(final DataflowJob dataflowJob, @Value("${dataflowJob.cron}") final String cron, 
+                                                     @Value("${dataflowJob.shardingTotalCount}") final int shardingTotalCount,
+                                                     @Value("${dataflowJob.shardingItemParameters}") final String shardingItemParameters) {
+        return new ScheduleJobBootstrap(regCenter, dataflowJob, getJobConfiguration(dataflowJob.getClass(), cron, shardingTotalCount, shardingItemParameters), tracingConfig);
     }
     
     private JobConfiguration getJobConfiguration(final Class<? extends DataflowJob> jobClass, final String cron, final int shardingTotalCount, final String shardingItemParameters) {
-        return JobConfiguration.newBuilder(jobClass.getName(), JobType.DATAFLOW, cron, shardingTotalCount)
-                .shardingItemParameters(shardingItemParameters).setProperty(DataflowJobExecutor.STREAM_PROCESS_KEY, Boolean.TRUE.toString()).overwrite(true).build();
+        return JobConfiguration.newBuilder(jobClass.getName(), shardingTotalCount)
+                .cron(cron).shardingItemParameters(shardingItemParameters).setProperty(DataflowJobExecutor.STREAM_PROCESS_KEY, Boolean.TRUE.toString()).overwrite(true).build();
     }
 }

@@ -17,7 +17,7 @@
 
 package org.apache.shardingsphere.elasticjob.lite.internal.config;
 
-import org.apache.shardingsphere.elasticjob.lite.config.JobConfiguration;
+import org.apache.shardingsphere.elasticjob.lite.api.job.config.JobConfiguration;
 import org.apache.shardingsphere.elasticjob.lite.exception.JobConfigurationException;
 import org.apache.shardingsphere.elasticjob.lite.exception.JobExecutionEnvironmentException;
 import org.apache.shardingsphere.elasticjob.lite.internal.config.yaml.YamlJobConfiguration;
@@ -56,7 +56,6 @@ public final class ConfigurationService {
         } else {
             result = jobNodeStorage.getJobNodeDataDirectly(ConfigurationNode.ROOT);
         }
-        // TODO investigate why sometimes result is null
         return YamlEngine.unmarshal(result, YamlJobConfiguration.class).toJobConfiguration();
     }
     

@@ -18,12 +18,11 @@
 package org.apache.shardingsphere.elasticjob.lite.internal.setup;
 
 import org.apache.shardingsphere.elasticjob.lite.api.listener.ElasticJobListener;
-import org.apache.shardingsphere.elasticjob.lite.config.JobConfiguration;
+import org.apache.shardingsphere.elasticjob.lite.api.job.config.JobConfiguration;
 import org.apache.shardingsphere.elasticjob.lite.internal.config.ConfigurationService;
 import org.apache.shardingsphere.elasticjob.lite.internal.election.LeaderService;
 import org.apache.shardingsphere.elasticjob.lite.internal.instance.InstanceService;
 import org.apache.shardingsphere.elasticjob.lite.internal.listener.ListenerManager;
-import org.apache.shardingsphere.elasticjob.lite.internal.monitor.MonitorService;
 import org.apache.shardingsphere.elasticjob.lite.internal.reconcile.ReconcileService;
 import org.apache.shardingsphere.elasticjob.lite.internal.server.ServerService;
 import org.apache.shardingsphere.elasticjob.lite.internal.sharding.ShardingService;
@@ -46,8 +45,6 @@ public final class SetUpFacade {
     
     private final ShardingService shardingService;
     
-    private final MonitorService monitorService;
-    
     private final ReconcileService reconcileService;
     
     private ListenerManager listenerManager;
@@ -58,7 +55,6 @@ public final class SetUpFacade {
         serverService = new ServerService(regCenter, jobName);
         instanceService = new InstanceService(regCenter, jobName);
         shardingService = new ShardingService(regCenter, jobName);
-        monitorService = new MonitorService(regCenter, jobName);
         reconcileService = new ReconcileService(regCenter, jobName);
         listenerManager = new ListenerManager(regCenter, jobName, elasticJobListeners);
     }
@@ -85,7 +81,6 @@ public final class SetUpFacade {
         serverService.persistOnline(enabled);
         instanceService.persistOnline();
         shardingService.setReshardingFlag();
-        monitorService.listen();
         if (!reconcileService.isRunning()) {
             reconcileService.startAsync();
         }

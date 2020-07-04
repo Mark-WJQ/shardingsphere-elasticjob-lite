@@ -18,13 +18,13 @@
 package org.apache.shardingsphere.elasticjob.lite.internal.failover;
 
 import org.apache.curator.framework.recipes.cache.TreeCacheEvent.Type;
-import org.apache.shardingsphere.elasticjob.lite.api.JobType;
-import org.apache.shardingsphere.elasticjob.lite.config.JobConfiguration;
+import org.apache.shardingsphere.elasticjob.lite.api.job.config.JobConfiguration;
 import org.apache.shardingsphere.elasticjob.lite.fixture.LiteYamlConstants;
 import org.apache.shardingsphere.elasticjob.lite.handler.sharding.JobInstance;
 import org.apache.shardingsphere.elasticjob.lite.internal.config.ConfigurationService;
 import org.apache.shardingsphere.elasticjob.lite.internal.listener.AbstractJobListener;
 import org.apache.shardingsphere.elasticjob.lite.internal.schedule.JobRegistry;
+import org.apache.shardingsphere.elasticjob.lite.internal.schedule.JobScheduleController;
 import org.apache.shardingsphere.elasticjob.lite.internal.sharding.ShardingService;
 import org.apache.shardingsphere.elasticjob.lite.internal.storage.JobNodeStorage;
 import org.apache.shardingsphere.elasticjob.lite.util.ReflectionUtils;
@@ -47,6 +47,9 @@ public final class FailoverListenerManagerTest {
     
     @Mock
     private JobNodeStorage jobNodeStorage;
+
+    @Mock
+    private JobScheduleController jobScheduleController;  
     
     @Mock
     private ConfigurationService configService;
@@ -81,22 +84,29 @@ public final class FailoverListenerManagerTest {
     
     @Test
     public void assertJobCrashedJobListenerWhenIsNotNodeRemoved() {
-        when(configService.load(true)).thenReturn(JobConfiguration.newBuilder("test_job", JobType.SIMPLE, "0/1 * * * * ?", 3).failover(true).build());
+        JobRegistry.getInstance().addJobInstance("test_job", new JobInstance("127.0.0.1@-@0"));
+        JobRegistry.getInstance().registerJob("test_job", jobScheduleController);
+        when(configService.load(true)).thenReturn(JobConfiguration.newBuilder("test_job", 3).cron("0/1 * * * * ?").failover(true).build());
         failoverListenerManager.new JobCrashedJobListener().dataChanged("/test_job/instances/127.0.0.1@-@0", Type.NODE_ADDED, "");
         verify(failoverService, times(0)).failoverIfNecessary();
+        JobRegistry.getInstance().shutdown("test_job");
     }
     
     @Test
     public void assertJobCrashedJobListenerWhenIsNotInstancesPath() {
-        when(configService.load(true)).thenReturn(JobConfiguration.newBuilder("test_job", JobType.SIMPLE, "0/1 * * * * ?", 3).failover(true).build());
+        JobRegistry.getInstance().addJobInstance("test_job", new JobInstance("127.0.0.1@-@0"));
+        JobRegistry.getInstance().registerJob("test_job", jobScheduleController);
+        when(configService.load(true)).thenReturn(JobConfiguration.newBuilder("test_job", 3).cron("0/1 * * * * ?").failover(true).build());
         failoverListenerManager.new JobCrashedJobListener().dataChanged("/test_job/other/127.0.0.1@-@0", Type.NODE_REMOVED, "");
         verify(failoverService, times(0)).failoverIfNecessary();
+        JobRegistry.getInstance().shutdown("test_job");
     }
     
     @Test
     public void assertJobCrashedJobListenerWhenIsSameInstance() {
         JobRegistry.getInstance().addJobInstance("test_job", new JobInstance("127.0.0.1@-@0"));
-        when(configService.load(true)).thenReturn(JobConfiguration.newBuilder("test_job", JobType.SIMPLE, "0/1 * * * * ?", 3).failover(true).build());
+        JobRegistry.getInstance().registerJob("test_job", jobScheduleController);
+        when(configService.load(true)).thenReturn(JobConfiguration.newBuilder("test_job", 3).cron("0/1 * * * * ?").failover(true).build());
         failoverListenerManager.new JobCrashedJobListener().dataChanged("/test_job/instances/127.0.0.1@-@0", Type.NODE_REMOVED, "");
         verify(failoverService, times(0)).failoverIfNecessary();
         JobRegistry.getInstance().shutdown("test_job");
@@ -105,7 +115,8 @@ public final class FailoverListenerManagerTest {
     @Test
     public void assertJobCrashedJobListenerWhenIsOtherInstanceCrashed() {
         JobRegistry.getInstance().addJobInstance("test_job", new JobInstance("127.0.0.1@-@0"));
-        when(configService.load(true)).thenReturn(JobConfiguration.newBuilder("test_job", JobType.SIMPLE, "0/1 * * * * ?", 3).failover(true).build());
+        JobRegistry.getInstance().registerJob("test_job", jobScheduleController);
+        when(configService.load(true)).thenReturn(JobConfiguration.newBuilder("test_job", 3).cron("0/1 * * * * ?").failover(true).build());
         when(shardingService.getShardingItems("127.0.0.1@-@1")).thenReturn(Arrays.asList(0, 2));
         failoverListenerManager.new JobCrashedJobListener().dataChanged("/test_job/instances/127.0.0.1@-@1", Type.NODE_REMOVED, "");
         verify(failoverService).setCrashedFailoverFlag(0);
@@ -117,7 +128,8 @@ public final class FailoverListenerManagerTest {
     @Test
     public void assertJobCrashedJobListenerWhenIsOtherFailoverInstanceCrashed() {
         JobRegistry.getInstance().addJobInstance("test_job", new JobInstance("127.0.0.1@-@0"));
-        when(configService.load(true)).thenReturn(JobConfiguration.newBuilder("test_job", JobType.SIMPLE, "0/1 * * * * ?", 3).failover(true).build());
+        JobRegistry.getInstance().registerJob("test_job", jobScheduleController);
+        when(configService.load(true)).thenReturn(JobConfiguration.newBuilder("test_job", 3).cron("0/1 * * * * ?").failover(true).build());
         when(failoverService.getFailoverItems("127.0.0.1@-@1")).thenReturn(Collections.singletonList(1));
         failoverListenerManager.new JobCrashedJobListener().dataChanged("/test_job/instances/127.0.0.1@-@1", Type.NODE_REMOVED, "");
         verify(failoverService).setCrashedFailoverFlag(1);
